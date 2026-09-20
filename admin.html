@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FF Admin Panel</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f6f9;font-family:Arial,sans-serif;color:#222}
+header{background:#111827;color:#fff;padding:20px;text-align:center}main{max-width:900px;width:94%;margin:18px auto}
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:15px;box-shadow:0 4px 15px #0001}
+input{width:100%;padding:12px;border:1px solid #ddd;border-radius:9px;margin:7px 0 12px;font-size:16px}
+button{padding:10px 13px;border:0;border-radius:9px;cursor:pointer;font-weight:bold;margin:3px}
+.login{max-width:420px;margin:30px auto}.primary{background:#111827;color:#fff}.danger{background:#dc2626;color:#fff}.ok{background:#16a34a;color:#fff}.muted{background:#e5e7eb}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:9px;border-bottom:1px solid #eee;text-align:left}th{background:#f9fafb}
+.badge{padding:4px 7px;border-radius:20px;background:#fff7ed}.empty{text-align:center;color:#777;padding:25px}
+@media(max-width:650px){table{display:block;overflow-x:auto;white-space:nowrap}}
+</style>
+</head>
+<body>
+<header><h1>🔐 FF Top-Up Admin</h1><div>Order Management</div></header>
+<main>
+<div id="login" class="card login">
+<h2>Admin Login</h2>
+<p>ডেমো Admin password: <b>123456</b></p>
+<input id="pw" type="password" placeholder="Password">
+<button class="primary" onclick="login()">Login</button>
+</div>
+<div id="panel" style="display:none">
+<div class="card">
+<button class="ok" onclick="exportCSV()">⬇️ Export CSV</button>
+<button class="danger" onclick="clearOrders()">🗑️ Delete All</button>
+<button class="muted" onclick="logout()">Logout</button>
+</div>
+<div class="card"><h2>📋 Orders</h2><div id="orders"></div></div>
+</div>
+</main>
+<script>
+function login(){if(document.getElementById('pw').value==='123456'){sessionStorage.setItem('admin','1');show()}else alert('Wrong password')}
+function show(){document.getElementById('login').style.display='none';document.getElementById('panel').style.display='block';render()}
+function logout(){sessionStorage.removeItem('admin');location.reload()}
+function get(){return JSON.parse(localStorage.getItem('ffOrders')||'[]')}
+function save(x){localStorage.setItem('ffOrders',JSON.stringify(x))}
+function status(i,s){let x=get();x[i].status=s;save(x);render()}
+function del(i){let x=get();x.splice(i,1);save(x);render()}
+function clearOrders(){if(confirm('সব order মুছে ফেলবেন?')){save([]);render()}}
+function render(){
+ let x=get(),d=document.getElementById('orders');
+ if(!x.length){d.innerHTML='<div class="empty">কোনো order নেই</div>';return}
+ let h='<table><tr><th>Order</th><th>UID</th><th>Package</th><th>Amount</th><th>Payment</th><th>Status</th><th>Action</th></tr>';
+ x.forEach((o,i)=>{h+='<tr><td>'+o.id+'<br><small>'+o.created+'</small></td><td>'+o.uid+'</td><td>'+o.package+'</td><td>৳'+o.amount+'</td><td>'+o.payment+'</td><td><span class="badge">'+o.status+'</span></td><td><button class="ok" onclick="status('+i+',\'Completed\')">Complete</button><button class="danger" onclick="del('+i+')">Delete</button></td></tr>'});
+ d.innerHTML=h+'</table>'
+}
+function exportCSV(){
+ let x=get();if(!x.length)return alert('No orders');
+ let rows=[['Order ID','UID','Package','Amount','Payment','Status','Created'],...x.map(o=>[o.id,o.uid,o.package,o.amount,o.payment,o.status,o.created])];
+ let csv=rows.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\n');
+ let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='ff-orders.csv';a.click();
+}
+if(sessionStorage.getItem('admin')==='1')show();
+</script>
+</body>
+</html>
